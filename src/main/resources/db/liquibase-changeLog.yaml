@@ -1,0 +1,5 @@
+databaseChangelog:
+  - include:
+      file: db/changelog/001_ddl_create_book_table.xml
+  - include:
+      file: db/changelog/002_ddl_create_reader_table.xml
