@@ -14,4 +14,9 @@ public interface ReaderEntityRepository extends JpaRepository<ReaderEntity, Long
             "OR book_reader.surname is null)", nativeQuery = true)
     List<ReaderEntity> findReaderEntityByFirstNameAndSurname(@Param(value = "firstName") String firstName,
                                                              @Param(value = "surname") String surname);
+
+    @Query(value = "select * from book_reader\n" +
+            "         join public.book b on b.book_id_pk = book_reader.book_id_fk\n" +
+            "         where surname ilike :surname%", nativeQuery = true)
+    List<ReaderEntity> findReaderByLastName(@Param("surname") String surname);
 }

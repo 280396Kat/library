@@ -4,6 +4,11 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.awt.print.Book;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -26,7 +31,14 @@ public class ReaderEntity {
 
     private String surname;
 
-    @ManyToOne
-    @JoinColumn(name = "book_id_fk")
-    private BookEntity bookEntity;
+    private String middleName;
+
+    private String phoneNumber;
+
+    private LocalDate dateOfBirth;
+
+
+    @OneToMany(mappedBy = "readerEntity")
+    private List<BookEntity> bookEntities = new ArrayList<>();
+
 }

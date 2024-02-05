@@ -4,6 +4,8 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.io.Reader;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,10 +27,21 @@ public class BookEntity {
 
     private String name;
 
-    private String nameAuthor;
-
     private String genre;
 
-    @OneToMany(mappedBy = "bookEntity")
-    private List<ReaderEntity> readers = new ArrayList<>();
+    private String nameAuthor;
+
+    @Column(name = "start_read_date")
+    private LocalDate startDate;
+
+    @Column(name = "end_read_date")
+    private LocalDate finishDate;
+
+    private int amountOfDays;
+
+    @ManyToOne
+    @JoinColumn(name = "reader_id_fk")
+    private ReaderEntity readerEntity;
+
+
 }

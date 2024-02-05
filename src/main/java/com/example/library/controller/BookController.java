@@ -1,7 +1,11 @@
 package com.example.library.controller;
 
+import com.example.library.dto.BookDto;
+import com.example.library.dto.BookItemDto;
 import com.example.library.entity.BookEntity;
+import com.example.library.exception.NotFoundException;
 import com.example.library.service.BookService;
+import com.example.library.service.BookServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,37 +17,38 @@ import java.util.List;
 @RestController
 public class BookController {
 
-    private final BookService bookService;
+    private final BookServiceImpl bookService;
 
-    public BookController(BookService bookService) {
+    public BookController(BookServiceImpl bookService) {
         this.bookService = bookService;
     }
 
     @PostMapping("/save")
     @ResponseStatus(HttpStatus.CREATED)
-    public BookEntity save(@RequestBody BookEntity bookEntity) {
-        return bookService.save(bookEntity);
+    public void save(@RequestBody BookItemDto bookItemDto) {
+        bookService.save(bookItemDto);
     }
 
-    @DeleteMapping("/delete")
+
+ /*   @DeleteMapping("/delete")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public boolean deleteById(@RequestParam long id) {
-        return bookService.deleteById(id);
-    }
+        return true;
+    }*/
 
     @PutMapping("/update/{id}")
-    public BookEntity update(@PathVariable long id, @RequestBody BookEntity bookEntity) {
-        return bookService.update(id, bookEntity);
+    public BookItemDto update(@RequestBody BookItemDto bookItemDto) {
+        return bookService.update(bookItemDto);
+    }
+
+
+    @GetMapping("/getAll")
+    public List<BookItemDto> getAll() {
+        return bookService.getAll();
     }
 
     @GetMapping("/find/{id}")
-    public BookEntity getById(@PathVariable long id) {
-        return bookService.findById(id);
+    public BookDto getById(@PathVariable long id) {
+        return bookService.getBookDtoById(id);
     }
-
-    @GetMapping("/getAll")
-    public List<BookEntity> getAll() {
-        return bookService.findAll();
-    }
-
 }
