@@ -37,8 +37,6 @@ public class ReaderEntity {
 
     private LocalDate dateOfBirth;
 
-
     @OneToMany(mappedBy = "readerEntity")
     private List<BookEntity> bookEntities = new ArrayList<>();
-
 }

@@ -42,6 +42,4 @@ public class BookEntity {
     @ManyToOne
     @JoinColumn(name = "reader_id_fk")
     private ReaderEntity readerEntity;
-
-
 }

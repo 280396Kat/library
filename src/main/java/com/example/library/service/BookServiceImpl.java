@@ -44,6 +44,36 @@ public class BookServiceImpl {
         bookEntityRepository.save(bookEntity);
     }
 
+
+    // Удалить из списка книгу, если читатель ее нам вернул.
+    public void returnBook(Long bookId) {
+        BookEntity bookEntity = bookEntityRepository.findById(bookId) // достаем книгу из репозитория
+                .orElseThrow(() -> new NotFoundException(String.format("Book is not found id = %s", bookId)));
+        if (bookEntity.getReaderEntity() != null) { // проверяем, есть ли у неее читатель
+            bookEntity.setReaderEntity(null); // если книга имеет читателя,то обнуляем поле readerEntity и сохраняемв репозитории
+            bookEntityRepository.save(bookEntity);
+        } else { // если читателя нет, выбрасываем исключение
+            throw new IllegalStateException("Book is not assigned to any reader.");
+        }
+    }
+
+    // Из списка книг, нужно выбрать книгу и назначить читателю, если у него нет ее на руках
+    public void assignBookToReader(Long bookId, Long readerId) {
+        BookEntity bookEntity = bookEntityRepository.findById(bookId) // достаем книгу
+                .orElseThrow(() -> new NotFoundException(String.format("Book is not found id = %s", bookId)));
+        ReaderEntity readerEntity = readerEntityRepository.findById(readerId) // достаем читателя
+                .orElseThrow(() -> new NotFoundException(String.format("Reader is not found id = %s", readerId)));
+        if (bookEntity.getReaderEntity() == null) { // проверяем, что книга не имеет читателя
+            List<BookEntity> readerBooks = readerEntity.getBookEntities(); // получаем список книг, которые есть у читателя
+            bookEntity.setReaderEntity(readerEntity); // назначаем книгу
+            bookEntityRepository.save(bookEntity); // сохраняем
+        } else {
+            throw new IllegalStateException("The reader already has the book.");
+            // на счет исключения не знаю, какое нужно. Вроде на джава раш почитала,
+            // подумала, что подойдет (некорректное состояние объекта или выполнение операции)
+        }
+    }
+
     public void updateReaderBookById(List<Long> id) { // а этот метод для чего? Он обновляет/получает список книг, которые есть у читателя?
         id.forEach(bookId -> {
             BookEntity bookEntity = bookEntityRepository.findById(bookId)
