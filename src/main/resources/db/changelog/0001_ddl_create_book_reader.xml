@@ -5,6 +5,31 @@
                 <tableExists tableName="book_reader"/>
             </not>
         </preConditions>
-        <sqlFile dbms="postgresql" path="db/changelog/sql/0001_ddl_create_book_reader_table.sql"/>
+     <createTable tableName="book_reader">
+         <column name="book_reader_id_pk" type="serial">
+             <constraints primaryKey="true" nullable="false"/>
+         </column>
+         <column
+             name="first_name" type="varchar" remarks="Имя читателя">
+         </column>
+         <column
+             name="surname" type="varchar" remarks="Фамилия читателя">
+         </column>
+         <column
+             name="middle_name" type="varchar" remarks="Отчество читателя">
+         </column>
+         <column
+             name="phone_number" type="varchar" remarks="Номер телефона">
+         </column>
+         <column
+             name="date_of_birth" type="date" remarks="Дата рождения">
+         </column>
+         <column
+                 name="reader_ticket" type="varchar" remarks="Читательский билет">
+         </column>
+     </createTable>
+        <rollback>
+            <dropTable tableName="book_reader"/>
+        </rollback>
     </changeSet>
 </databaseChangeLog>

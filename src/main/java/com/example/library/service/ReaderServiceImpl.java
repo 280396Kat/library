@@ -1,13 +1,14 @@
 package com.example.library.service;
 
-import com.example.library.dto.BookDto;
-import com.example.library.dto.BookItemDto;
-import com.example.library.dto.ReaderDto;
-import com.example.library.dto.ReaderRegisterDto;
+import com.example.library.dto.*;
+import com.example.library.dto.filter.ReaderDtoFilter;
 import com.example.library.entity.BookEntity;
 import com.example.library.entity.ReaderEntity;
 import com.example.library.exception.NotFoundException;
+import com.example.library.mapper.BookMapper;
+import com.example.library.mapper.ReaderMapper;
 import com.example.library.repository.ReaderEntityRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -18,22 +19,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ReaderServiceImpl {
-
     private final ReaderEntityRepository readerEntityRepository;
-
-    public ReaderServiceImpl(ReaderEntityRepository readerEntityRepository) {
-        this.readerEntityRepository = readerEntityRepository;
-    }
+    private final ReaderMapper readerMapper;
+    private final BookMapper bookMapper;
 
     public void save(ReaderRegisterDto readerRegisterDto) {
-        ReaderEntity readerEntity = ReaderEntity.builder()
-                .dateOfBirth(readerRegisterDto.getDateOfBirth())
-                .middleName(readerRegisterDto.getMiddleName())
-                .surname(readerRegisterDto.getSurname())
-                .name(readerRegisterDto.getName())
-                .phoneNumber(readerRegisterDto.getPhoneNumber())
-                .build();
+        ReaderEntity readerEntity = readerMapper.toEntity(readerRegisterDto);
         readerEntityRepository.save(readerEntity);
     }
 
@@ -50,64 +43,47 @@ public class ReaderServiceImpl {
         readerEntity.setSurname(readerRegisterDto.getSurname());
         readerEntity.setMiddleName(readerRegisterDto.getMiddleName());
         readerEntity.setPhoneNumber(readerRegisterDto.getPhoneNumber());
-        ReaderEntity entitySave = readerEntityRepository.save(readerEntity);
-        ReaderRegisterDto registerDto = ReaderRegisterDto.builder()
+        return readerEntityRepository.findById(readerEntity.getId())
+                .map(readerMapper::toRegisterDto)
+                .orElseThrow(() -> new NotFoundException(String.format("Reader is not found id = %s", readerRegisterDto)));
+    }
+
+    //ReaderEntity entitySave = readerEntityRepository.save(readerEntity);
+       /* ReaderRegisterDto registerDto = ReaderRegisterDto.builder()
                 .id(entitySave.getId())
                 .name(entitySave.getName())
                 .surname(entitySave.getSurname())
                 .middleName(entitySave.getMiddleName())
                 .phoneNumber(entitySave.getPhoneNumber())
-                .build();
-        return registerDto;
-    }
+                .build();*/
 
     public ReaderDto getById(long id) {
-        ReaderEntity readerEntity = readerEntityRepository.findById(id)
+        return readerEntityRepository.findById(id)
+                .map(readerMapper::toDto)
                 .orElseThrow(() -> new NotFoundException(String.format("Reader is not found id = %s", id)));
-        ReaderDto readerDto = ReaderDto.builder()
-                .id(readerEntity.getId())
-                .fullName(readerEntity.getName() + " " + readerEntity.getSurname() + " " +
-                        readerEntity.getMiddleName())
-                .phoneNumber(readerEntity.getPhoneNumber())
-                .dateOfBirth(readerEntity.getDateOfBirth())
-                .books(readerEntity.getBookEntities().stream() // тут получаем книги, которые брал читатель. Верно?
-                        .map(bookEntity -> {
-                            BookItemDto bookItemDto = new BookItemDto();
-                            bookItemDto.setName(bookItemDto.getName());
-                            bookItemDto.setAuthor(bookItemDto.getAuthor());
-                            bookItemDto.setGenre(bookItemDto.getGenre());
-                            bookItemDto.setStartDate(bookItemDto.getStartDate());
-                            bookItemDto.setFinishDate(bookItemDto.getFinishDate());
-                            return bookItemDto;
-                        })
-                        .collect(Collectors.toList()))
-                .build();
-        return readerDto;
     }
-
-    public List<ReaderEntity> getAll() {
-        return readerEntityRepository.findAll();
-    } // этот метод получается не нужен?
-
 
     public List<ReaderDto> getReaderEntityByFirstNameAndSurname(String firstName, String surname) {
         return readerEntityRepository.findReaderEntityByFirstNameAndSurname(firstName, surname).stream()
                 .map(tmp -> ReaderDto.builder()
                         .id(tmp.getId())
-                        .fullName(tmp.getName() + " " + tmp.getSurname())
+                        .fullName(tmp.getName() + " " + tmp.getSurname() + " " + tmp.getMiddleName())
                         .books(tmp.getBookEntities().stream()
-                                .map(bookEntity -> BookItemDto.builder()
-                                        .id(bookEntity.getId())
-                                        .name(bookEntity.getName())
-                                        .author(bookEntity.getNameAuthor())
-                                        .genre(bookEntity.getGenre())
-                                        .startDate(bookEntity.getStartDate())
-                                        .finishDate(bookEntity.getFinishDate())
-                                        .build()
-                                )
+                                .map(bookMapper::toItemDto)
                                 .collect(Collectors.toList())
                         )
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    public List<ReaderDtoInfo> getReaderByFilter(ReaderDtoFilter readerDtoFilter) {
+        return readerEntityRepository.findReaderEntityByFilter(
+                readerDtoFilter.getSurname(),
+                readerDtoFilter.getName(),
+                readerDtoFilter.getMiddleName(),
+                readerDtoFilter.getDateOfBirth()
+        ).stream()
+                .map(readerMapper::toInfoDto
+                ).collect(Collectors.toList());
     }
 }

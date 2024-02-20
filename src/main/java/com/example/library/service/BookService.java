@@ -1,14 +1,11 @@
 package com.example.library.service;
 
 import com.example.library.dto.BookDto;
-import com.example.library.dto.filter.BookDtoFilter;
+import com.example.library.dto.filter.ReaderDtoFilter;
 import com.example.library.entity.BookEntity;
 
 
-
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 public interface BookService {
     BookEntity save(BookEntity bookEntity);
@@ -21,7 +18,7 @@ public interface BookService {
 
     List<BookEntity> getAll();
 
-    List<BookDto> getBooksByFilter(BookDtoFilter bookDtoFilter);
+    List<BookDto> getBooksByFilter(ReaderDtoFilter bookDtoFilter);
 
     BookDto getBookDtoById(long id);
 }

@@ -37,8 +37,6 @@ public class BookEntity {
     @Column(name = "end_read_date")
     private LocalDate finishDate;
 
-    private int amountOfDays;
-
     @ManyToOne
     @JoinColumn(name = "reader_id_fk")
     private ReaderEntity readerEntity;

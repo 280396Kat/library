@@ -2,58 +2,40 @@ package com.example.library.service;
 
 import com.example.library.dto.BookDto;
 import com.example.library.dto.BookItemDto;
-import com.example.library.dto.ReaderDto;
-import com.example.library.dto.filter.BookDtoFilter;
 import com.example.library.entity.BookEntity;
 import com.example.library.entity.ReaderEntity;
 import com.example.library.exception.NotFoundException;
+import com.example.library.mapper.BookMapper;
 import com.example.library.repository.BookEntityRepository;
 import com.example.library.repository.ReaderEntityRepository;
-import org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
-import java.time.LocalDate;
-import java.time.Period;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class BookServiceImpl {
-
     private final BookEntityRepository bookEntityRepository;
-
     private final ReaderEntityRepository readerEntityRepository;
+    private final BookMapper bookMapper;
 
-    public BookServiceImpl(BookEntityRepository bookEntityRepository, ReaderEntityRepository readerEntityRepository) {
-        this.bookEntityRepository = bookEntityRepository;
-        this.readerEntityRepository = readerEntityRepository;
-    }
 
     public void save(BookItemDto bookItemDto) {
-        BookEntity bookEntity = BookEntity.builder()
-                .name(bookItemDto.getName())
-                .nameAuthor(bookItemDto.getAuthor())
-                .genre(bookItemDto.getGenre())
-                .startDate(bookItemDto.getStartDate())
-                .finishDate(bookItemDto.getFinishDate())
-                .build();
+        BookEntity bookEntity = bookMapper.toEntity(bookItemDto);
         bookEntityRepository.save(bookEntity);
     }
 
-
     // Удалить из списка книгу, если читатель ее нам вернул.
-    public void returnBook(Long bookId) {
+    public void removeBookFromReadersList(Long bookId) {
         BookEntity bookEntity = bookEntityRepository.findById(bookId) // достаем книгу из репозитория
                 .orElseThrow(() -> new NotFoundException(String.format("Book is not found id = %s", bookId)));
         if (bookEntity.getReaderEntity() != null) { // проверяем, есть ли у неее читатель
             bookEntity.setReaderEntity(null); // если книга имеет читателя,то обнуляем поле readerEntity и сохраняемв репозитории
             bookEntityRepository.save(bookEntity);
-        } else { // если читателя нет, выбрасываем исключение
-            throw new IllegalStateException("Book is not assigned to any reader.");
+        } else {
+            throw new NotFoundException("Book is not assigned to any reader.");
         }
     }
 
@@ -64,13 +46,16 @@ public class BookServiceImpl {
         ReaderEntity readerEntity = readerEntityRepository.findById(readerId) // достаем читателя
                 .orElseThrow(() -> new NotFoundException(String.format("Reader is not found id = %s", readerId)));
         if (bookEntity.getReaderEntity() == null) { // проверяем, что книга не имеет читателя
-            List<BookEntity> readerBooks = readerEntity.getBookEntities(); // получаем список книг, которые есть у читателя
-            bookEntity.setReaderEntity(readerEntity); // назначаем книгу
-            bookEntityRepository.save(bookEntity); // сохраняем
-        } else {
-            throw new IllegalStateException("The reader already has the book.");
-            // на счет исключения не знаю, какое нужно. Вроде на джава раш почитала,
-            // подумала, что подойдет (некорректное состояние объекта или выполнение операции)
+            List<BookEntity> readerBooks = readerEntity.getBookEntities();// получаем список книг, которые есть у читателя
+            boolean bookAlreadyAssigned = readerBooks.stream() // проверяем, назначена ли книга читателю
+                    .anyMatch(book -> book.getId().equals(bookId)); // anyMatch(есть ли в с стриме хоть один подходящий
+            // элемент проверяет, есть ли в триме книга с нужным id
+            if (!bookAlreadyAssigned) {
+                bookEntity.setReaderEntity(readerEntity); // назначаем книгу
+                bookEntityRepository.save(bookEntity); // сохраняем
+            } else {
+                throw new NotFoundException("There is already such a book");
+            }
         }
     }
 
@@ -91,41 +76,42 @@ public class BookServiceImpl {
         bookEntity.setGenre(bookItemDto.getGenre());
         bookEntity.setStartDate(bookItemDto.getStartDate());
         bookEntity.setFinishDate(bookItemDto.getFinishDate());
-        BookEntity entitySave = bookEntityRepository.save(bookEntity);
-        BookItemDto bookItem = BookItemDto.builder()
+        // BookEntity entitySave = bookEntityRepository.save(bookEntity);
+        return bookEntityRepository.findById(bookEntity.getId())
+                .map(bookMapper::toItemDto)
+                .orElseThrow(() -> new NotFoundException(String.format("Book is not found id = %s", bookItemDto)));
+    }
+      /*  BookItemDto bookItem = BookItemDto.builder()
                 .id(entitySave.getId())
                 .name(entitySave.getName())
                 .author(entitySave.getNameAuthor())
                 .genre(entitySave.getGenre())
                 .startDate(entitySave.getStartDate())
                 .finishDate(entitySave.getFinishDate())
-                .build();
-        return bookItem;
-    }
+                .build();*/
+
 
     public List<BookItemDto> getAll() {
         return bookEntityRepository.findAll().stream()
-                .map(bookEntity -> {
-                    BookItemDto bookItemDto = new BookItemDto();
-                    bookItemDto.setName(bookItemDto.getName());
-                    bookItemDto.setAuthor(bookItemDto.getAuthor());
-                    bookItemDto.setGenre(bookItemDto.getGenre());
-                    bookItemDto.setStartDate(bookItemDto.getStartDate());
-                    bookItemDto.setFinishDate(bookItemDto.getFinishDate());
-                    return bookItemDto;
-                })
+                .map(bookMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
+    /*  .stream()
+      .map(bookEntity -> {
+          BookItemDto bookItemDto = new BookItemDto();
+          bookItemDto.setName(bookItemDto.getName());
+          bookItemDto.setAuthor(bookItemDto.getAuthor());
+          bookItemDto.setGenre(bookItemDto.getGenre());
+          bookItemDto.setStartDate(bookItemDto.getStartDate());
+          bookItemDto.setFinishDate(bookItemDto.getFinishDate());
+          return bookItemDto;
+      })
+      .collect(Collectors.toList());*/
     public BookDto getBookDtoById(long id) {
-        BookEntity bookEntity = bookEntityRepository.findById(id)
+        return bookEntityRepository.findById(id)
+                .map(bookMapper::toDto)
                 .orElseThrow(() -> new NotFoundException(String.format("Book is not found id = %s", id)));
-        BookDto bookDto = BookDto.builder()
-                .id(bookEntity.getId())
-                .fullName(bookEntity.getName() + " " + bookEntity.getNameAuthor() + " " +
-                        bookEntity.getGenre())
-                .build();
-        return bookDto;
     }
 }
 

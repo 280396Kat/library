@@ -37,6 +37,8 @@ public class ReaderEntity {
 
     private LocalDate dateOfBirth;
 
+    private String readerTicket;
+
     @OneToMany(mappedBy = "readerEntity")
     private List<BookEntity> bookEntities = new ArrayList<>();
 }

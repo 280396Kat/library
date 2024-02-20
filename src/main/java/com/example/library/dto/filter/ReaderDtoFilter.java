@@ -3,15 +3,17 @@ package com.example.library.dto.filter;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Data
 @Builder
-public class BookDtoFilter {
+public class ReaderDtoFilter {
 
     private String name;
 
-    private String author;
-
-    private String genre;
+    private String  middleName;
 
     private String surname;
+
+    private LocalDate dateOfBirth;
 }

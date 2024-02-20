@@ -1,5 +1,7 @@
 package com.example.library.dto;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,13 +13,17 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ApiModel(value = "BookDto", description = "Модель данных описывает книгу")
 public class BookDto {
 
+    @ApiModelProperty("Идентификатор книги")
     private Long id;
 
+    @ApiModelProperty("Полное название книги")
     private String fullName;
 
-    private int amountOfDays; // может его нужно перенести в BookItemDto?
+    @ApiModelProperty("Дни до сдачи кники в библиотеку")
+    private Long amountOfDays;
 
 
     public void setFullName(String name, String author, String genre) {
@@ -26,9 +32,5 @@ public class BookDto {
 
     public void setFullName(String surname, String name) {
         this.fullName = surname + " " +  name;
-    }
-
-    public void setAmountOfDays(LocalDate startDate, LocalDate finishDate) {
-        this.amountOfDays = finishDate.getDayOfYear() - startDate.getDayOfYear();
     }
 }
